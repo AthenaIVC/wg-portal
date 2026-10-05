@@ -57,6 +57,9 @@ Without `editable_keys`, the backend would replace the browser-generated public 
 Branding is configured without code changes: `web.site_title` (shown next to the logo for non-admin users and used as config file name prefix),
 `web.site_company_name`, `web.site_logo_file` (replaces the header logo) and `web.site_css_file` (stylesheet loaded after the default styles).
 
+`auth.auto_login_provider` redirects unauthenticated users to an OIDC/OAuth provider right away; with `auth.hide_login_form: true`
+the password login form is only reachable as an emergency access via `/#/login?all`.
+
 A scheduled workflow opens a pull request whenever the upstream `master` branch has new commits.
 
 ## Documentation

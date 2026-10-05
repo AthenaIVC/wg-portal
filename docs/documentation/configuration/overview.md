@@ -86,6 +86,7 @@ auth:
     enabled: true
   min_password_length: 16
   hide_login_form: false
+  auto_login_provider: ""
 
 web:
   listening_address: :8888
@@ -602,6 +603,14 @@ Some core authentication options are shared across all providers, while others a
 - **Description:** If `true`, the login form is hidden and only the OIDC, OAuth, LDAP, or WebAuthn providers are shown. This is useful if you want to enforce a specific authentication method.
   If no social login providers are configured, the login form is always shown, regardless of this setting.
 - **Important:** You can still access the login form by adding the `?all` query parameter to the login URL (e.g. https://wg.portal/#/login?all). 
+
+### `auto_login_provider`
+- **Default:** *(empty)*
+- **Environment Variable:** `WG_PORTAL_AUTH_AUTO_LOGIN_PROVIDER`
+- **Description:** The `provider_name` of an OIDC or OAuth provider. If set, unauthenticated users that open the portal or the login page are redirected to this provider automatically.
+  There is no automatic redirect on the login page with the `?all` query parameter (e.g. https://wg.portal/#/login?all) and after a failed external login.
+  After a logout, the user is only redirected again if the IdP sends the user back to the portal (`logout_idp_session: true`, the default); as the IdP session has ended, the IdP asks for the credentials again.
+  Combined with `hide_login_form: true`, the login form is only reachable with `?all`.
 
 ---
 

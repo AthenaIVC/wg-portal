@@ -25,6 +25,10 @@ type Auth struct {
 	// HideLoginForm specifies whether the login form should be hidden. If no social login providers are configured,
 	// the login form will be shown regardless of this setting.
 	HideLoginForm bool `yaml:"hide_login_form"`
+	// AutoLoginProvider is the identifier (provider_name) of an OIDC or OAuth provider. If set, unauthenticated users
+	// are redirected to this provider automatically, except on the login page with the "all" query parameter, after a
+	// failed external login and after a logout that only ends the wg-portal session (no redirect to the IdP logout).
+	AutoLoginProvider string `yaml:"auto_login_provider"`
 }
 
 // BaseFields contains the basic fields that are used to map user information from the authentication providers.

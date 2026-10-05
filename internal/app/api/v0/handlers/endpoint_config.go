@@ -135,6 +135,7 @@ func (e ConfigEndpoint) handleSettingsGet() http.HandlerFunc {
 				WebAuthnEnabled:   e.cfg.Auth.WebAuthn.Enabled,
 				AvailableBackends: []model.SettingsBackendNames{}, // return an empty list instead of null
 				LoginFormVisible:  !e.cfg.Auth.HideLoginForm || !hasSocialLogin,
+				AutoLoginProvider: e.cfg.Auth.AutoLoginProvider,
 			})
 		} else {
 			respond.JSON(w, http.StatusOK, model.Settings{
@@ -147,6 +148,7 @@ func (e ConfigEndpoint) handleSettingsGet() http.HandlerFunc {
 				MinPasswordLength:         e.cfg.Auth.MinPasswordLength,
 				AvailableBackends:         controllerFn(),
 				LoginFormVisible:          !e.cfg.Auth.HideLoginForm || !hasSocialLogin,
+				AutoLoginProvider:         e.cfg.Auth.AutoLoginProvider,
 				CreateDefaultPeer:         e.cfg.DefaultPeerCreationEnabled(),
 			})
 		}
