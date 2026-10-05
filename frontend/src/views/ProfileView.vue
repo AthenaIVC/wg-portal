@@ -9,8 +9,10 @@ import UserPeerEditModal from "@/components/UserPeerEditModal.vue";
 import Pagination from "@/components/Pagination.vue";
 import { settingsStore } from "@/stores/settings";
 import { humanFileSize } from "@/helpers/utils";
+import { authStore } from "@/stores/auth";
 
 const settings = settingsStore()
+const auth = authStore()
 const profile = profileStore()
 const peers = peerStore()
 
@@ -56,6 +58,21 @@ async function bulkDelete() {
   }
 }
 
+// Device creation for non-admin users relies on browser-generated keys, which the backend only accepts with editable keys.
+const canAddDevice = computed(() => {
+  return settings.Setting('SelfProvisioning') && settings.Setting('EditableKeys') && profile.CountInterfaces > 0
+})
+
+async function deleteDevice(peer) {
+  if (confirm(t('devices.confirm-delete', {name: peer.DisplayName}))) {
+    try {
+      await profile.BulkDelete([peer.Identifier])
+    } catch (e) {
+      // notification is handled in store
+    }
+  }
+}
+
 function toggleSelectAll() {
   profile.FilteredAndPagedPeers.forEach(peer => {
     peer.IsSelected = selectAll.value;
@@ -75,6 +92,33 @@ onMounted(async () => {
   <PeerViewModal :peerId="viewedPeerId" :visible="viewedPeerId !== ''" @close="viewedPeerId = ''"></PeerViewModal>
   <UserPeerEditModal :peerId="editPeerId" :visible="editPeerId !== ''" @close="editPeerId = ''; profile.LoadPeers()"></UserPeerEditModal>
 
+  <!-- Device list for non-admin users -->
+  <template v-if="!auth.IsAdmin">
+    <h2 class="mt-4">{{ $t('devices.headline') }}</h2>
+    <p v-if="profile.CountPeers === 0" class="text-muted">{{ $t('devices.empty') }}</p>
+    <div v-for="peer in profile.Sorted" :key="peer.Identifier" class="card mb-2">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">{{ peer.DisplayName }}</span>
+        <div class="text-end">
+          <div>
+            <span v-if="peer.Disabled" class="text-danger" :title="peer.DisabledReason"><i class="fa-solid fa-circle fa-xs"></i> {{ $t('devices.disabled') }}</span>
+            <span v-else-if="profile.hasStatistics && profile.Statistics(peer.Identifier).IsConnected" class="text-success"><i class="fa-solid fa-circle fa-xs"></i> {{ $t('devices.connected') }}</span>
+            <span v-else-if="profile.hasStatistics" class="text-muted"><i class="fa-regular fa-circle fa-xs"></i> {{ $t('devices.disconnected') }}</span>
+          </div>
+          <button v-if="settings.Setting('SelfProvisioning') && profile.HasInterface(peer.InterfaceIdentifier)" class="btn btn-outline-danger btn-sm mt-1" type="button" @click.prevent="deleteDevice(peer)">
+            {{ $t('devices.delete') }}
+          </button>
+        </div>
+      </div>
+    </div>
+    <div v-if="canAddDevice" class="text-center mt-4">
+      <button class="btn btn-primary" type="button" @click.prevent="editPeerId = '#NEW#'">
+        <i class="fa fa-plus me-1"></i>{{ $t('devices.add') }}
+      </button>
+    </div>
+  </template>
+
+  <template v-else>
   <!-- Peer list -->
   <div class="mt-4 row">
     <div class="col-12 col-lg-5">
@@ -214,4 +258,6 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-</div></template>
+</div>
+  </template>
+</template>

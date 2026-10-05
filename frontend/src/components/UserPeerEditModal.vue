@@ -7,6 +7,7 @@ import { notify } from "@kyvg/vue3-notification";
 import { freshPeer, freshInterface } from '@/helpers/models';
 import { profileStore } from "@/stores/profile";
 import { settingsStore } from "@/stores/settings";
+import { authStore } from "@/stores/auth";
 import { downloadWgQuickConfig, generateKeypair } from '@/helpers/wireguard';
 
 const { t } = useI18n()
@@ -14,6 +15,7 @@ const { t } = useI18n()
 const peers = peerStore()
 const profile = profileStore()
 const settings = settingsStore()
+const auth = authStore()
 
 const props = defineProps({
   peerId: String,
@@ -21,6 +23,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+
+// Non-admin users only name their device; keys are generated in the browser and never shown.
+const simpleMode = computed(() => !auth.IsAdmin && props.peerId === '#NEW#')
 
 const selectedPeer = computed(() => {
   let p = peers.Find(props.peerId)
@@ -49,6 +54,10 @@ const selectedInterface = computed(() => {
 const title = computed(() => {
   if (!props.visible) {
     return ""
+  }
+
+  if (simpleMode.value) {
+    return t("devices.add")
   }
 
   if (selectedPeer.value) {
@@ -104,6 +113,9 @@ watch(() => props.visible, async (newValue, oldValue) => {
       formData.value.PreDown = peers.Prepared.PreDown
       formData.value.PostDown = peers.Prepared.PostDown
 
+      if (simpleMode.value) {
+        formData.value.DisplayName = ""
+      }
     } else { // fill existing data
       formData.value.Identifier = selectedPeer.value.Identifier
       formData.value.DisplayName = selectedPeer.value.DisplayName
@@ -178,6 +190,12 @@ async function generateClientSideKeyPair() {
   clientSideKeyGenerated.value = true
 }
 
+// e.g. "My VPN" and "MacBook Pro" become "my-vpn-MacBook-Pro.conf"
+function deviceConfigFileName(deviceName) {
+  const slug = (value) => value.trim().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '')
+  return `${slug(WGPORTAL_SITE_TITLE).toLowerCase()}-${slug(deviceName)}.conf`
+}
+
 async function save() {
   if (isSaving.value) return
   isSaving.value = true
@@ -187,7 +205,13 @@ async function save() {
     } else if (clientSideKeyGenerated.value) {
       // The client private key must never leave the browser.
       await peers.CreatePeer(selectedInterface.value.Identifier, { ...formData.value, PrivateKey: "" })
-      downloadWgQuickConfig(peers.Find(formData.value.PublicKey), formData.value.PrivateKey)
+      const createdPeer = peers.Find(formData.value.PublicKey)
+      downloadWgQuickConfig(createdPeer, formData.value.PrivateKey, createdPeer.Filename)
+    } else if (simpleMode.value) {
+      const keypair = await generateKeypair()
+      // The client private key must never leave the browser.
+      await peers.CreatePeer(selectedInterface.value.Identifier, { ...formData.value, PrivateKey: "", PublicKey: keypair.publicKey })
+      downloadWgQuickConfig(peers.Find(keypair.publicKey), keypair.privateKey, deviceConfigFileName(formData.value.DisplayName))
     } else {
       await peers.CreatePeer(selectedInterface.value.Identifier, formData.value)
     }
@@ -224,7 +248,15 @@ async function del() {
 
 <template>
   <Modal :title="title" :visible="visible" @close="close">
-    <template #default>
+    <template #default v-if="simpleMode">
+      <div class="form-group">
+        <label class="form-label">{{ $t('devices.name-label') }}</label>
+        <input type="text" class="form-control" :placeholder="$t('devices.name-placeholder')" required
+          v-model="formData.DisplayName">
+      </div>
+      <p class="form-text text-muted mt-3 mb-0">{{ $t('devices.download-notice') }}</p>
+    </template>
+    <template #default v-else>
       <fieldset>
         <legend class="mt-4">{{ $t('modals.peer-edit.header-general') }}</legend>
         <div class="form-group">
@@ -313,7 +345,14 @@ async function del() {
         </div>
       </fieldset>
     </template>
-    <template #footer>
+    <template #footer v-if="simpleMode">
+      <button class="btn btn-primary me-1" type="button" @click.prevent="save" :disabled="isSaving || !formData.DisplayName.trim()">
+        <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ $t('devices.create') }}
+      </button>
+      <button class="btn btn-secondary" type="button" @click.prevent="close">{{ $t('general.close') }}</button>
+    </template>
+    <template #footer v-else>
       <div class="flex-fill text-start">
         <button v-if="props.peerId !== '#NEW#'" class="btn btn-danger me-1" type="button" @click.prevent="del" :disabled="isDeleting">
           <span v-if="isDeleting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>

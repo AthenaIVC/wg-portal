@@ -660,5 +660,20 @@
         "description": "A prefix that is added to the peers display name."
       }
     }
+  },
+  "devices": {
+    "menu": "VPN Devices",
+    "headline": "Your devices",
+    "empty": "You have no devices yet.",
+    "add": "Add device",
+    "connected": "Connected",
+    "disconnected": "Not connected",
+    "disabled": "Disabled",
+    "delete": "Delete",
+    "confirm-delete": "Delete \"{name}\"? The VPN configuration on this device will stop working.",
+    "name-label": "Device name",
+    "name-placeholder": "MacBook Pro",
+    "create": "Create VPN configuration",
+    "download-notice": "The VPN configuration file can only be downloaded once, when it is created. If you lose it, delete the device and create it again."
   }
 }

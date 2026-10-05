@@ -6,7 +6,7 @@ import {authStore} from '@/stores/auth'
 import {securityStore} from '@/stores/security'
 import {notify} from "@kyvg/vue3-notification";
 
-export const publicPages = ['/', '/login', '/key-generator', '/ip-calculator']
+export const publicPages = ['/', '/login']
 
 const router = createRouter({
   // No base argument: createWebHashHistory() defaults to location.pathname + location.search,
@@ -26,6 +26,7 @@ const router = createRouter({
     {
       path: '/interfaces',
       name: 'interfaces',
+      meta: { adminOnly: true },
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
@@ -34,6 +35,7 @@ const router = createRouter({
     {
       path: '/users',
       name: 'users',
+      meta: { adminOnly: true },
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
@@ -58,6 +60,7 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
+      meta: { adminOnly: true },
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
@@ -66,6 +69,7 @@ const router = createRouter({
     {
       path: '/audit',
       name: 'audit',
+      meta: { adminOnly: true },
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
@@ -74,6 +78,7 @@ const router = createRouter({
     {
       path: '/key-generator',
       name: 'key-generator',
+      meta: { adminOnly: true },
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
@@ -82,6 +87,7 @@ const router = createRouter({
     {
       path: '/ip-calculator',
       name: 'ip-calculator',
+      meta: { adminOnly: true },
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
@@ -167,11 +173,17 @@ router.beforeEach(async (to) => {
     auth.SetReturnUrl(to.fullPath) // store the original destination before starting the auth process
     return '/login'
   }
+
+  // non-admin users only manage their VPN devices
+  if (auth.IsAuthenticated && !auth.IsAdmin && (to.path === '/' || to.meta.adminOnly)) {
+    return '/profile'
+  }
 })
 
 router.afterEach(async (to, from) => {
   const sec = securityStore()
-  const csrfPages = ['/', '/login']
+  // '/profile' is the landing page of non-admin users after login, which starts a new session
+  const csrfPages = ['/', '/login', '/profile']
 
   if (csrfPages.includes(to.path)) {
     await sec.LoadSecurityProperties() // make sure we have a valid csrf token

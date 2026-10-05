@@ -85,11 +85,12 @@ function buildWgQuickConfig(peer, privateKey) {
  * @function downloadWgQuickConfig
  * @param {object} peer - The peer as returned by the API.
  * @param {string} privateKey - The Base64-encoded private key.
+ * @param {string} filename - The name of the downloaded file.
  */
-export function downloadWgQuickConfig(peer, privateKey) {
+export function downloadWgQuickConfig(peer, privateKey, filename) {
   let element = document.createElement('a')
   element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(buildWgQuickConfig(peer, privateKey)))
-  element.setAttribute('download', peer.Filename)
+  element.setAttribute('download', filename)
 
   element.style.display = 'none'
   document.body.appendChild(element)

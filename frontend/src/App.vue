@@ -97,6 +97,7 @@ const languageFlag = computed(() => {
 })
 
 const companyName = ref(WGPORTAL_SITE_COMPANY_NAME);
+const siteTitle = ref(WGPORTAL_SITE_TITLE);
 const wgVersion = ref(WGPORTAL_VERSION);
 const currentYear = ref(new Date().getFullYear())
 const webBasePath = ref(WGPORTAL_BASE_PATH);
@@ -128,14 +129,20 @@ const userDisplayName = computed(() => {
 
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
-      <RouterLink class="navbar-brand" :to="{ name: 'home' }"><img :alt="companyName" :src="webBasePath + '/img/header-logo.png'" /></RouterLink>
+      <RouterLink v-if="auth.IsAuthenticated && !auth.IsAdmin" class="navbar-brand d-flex align-items-center" :to="{ name: 'profile' }"><img alt="" :src="webBasePath + '/img/header-logo.png'" class="me-2" />{{ siteTitle }}</RouterLink>
+      <RouterLink v-else class="navbar-brand" :to="{ name: 'home' }"><img :alt="companyName" :src="webBasePath + '/img/header-logo.png'" /></RouterLink>
       <button aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler"
         data-bs-target="#navbarTop" data-bs-toggle="collapse" type="button">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div id="navbarTop" class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
+        <ul v-if="auth.IsAuthenticated && !auth.IsAdmin" class="navbar-nav me-auto">
+          <li class="nav-item">
+            <RouterLink :to="{ name: 'profile' }" class="nav-link">{{ $t('devices.menu') }}</RouterLink>
+          </li>
+        </ul>
+        <ul v-else class="navbar-nav me-auto">
           <li class="nav-item">
             <RouterLink :to="{ name: 'home' }" class="nav-link">{{ $t('menu.home') }}</RouterLink>
           </li>
@@ -145,10 +152,10 @@ const userDisplayName = computed(() => {
           <li v-if="auth.IsAuthenticated && auth.IsAdmin" class="nav-item">
             <RouterLink :to="{ name: 'users' }" class="nav-link">{{ $t('menu.users') }}</RouterLink>
           </li>
-          <li class="nav-item">
+          <li v-if="auth.IsAuthenticated && auth.IsAdmin" class="nav-item">
             <RouterLink :to="{ name: 'key-generator' }" class="nav-link">{{ $t('menu.keygen') }}</RouterLink>
           </li>
-          <li class="nav-item">
+          <li v-if="auth.IsAuthenticated && auth.IsAdmin" class="nav-item">
             <RouterLink :to="{ name: 'ip-calculator' }" class="nav-link">{{ $t('menu.calculator') }}</RouterLink>
           </li>
         </ul>
@@ -158,10 +165,12 @@ const userDisplayName = computed(() => {
             <a aria-expanded="false" aria-haspopup="true" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"
               href="#" role="button">{{ userDisplayName }}</a>
             <div class="dropdown-menu">
-              <RouterLink :to="{ name: 'profile' }" class="dropdown-item"><i class="fas fa-user"></i> {{ $t('menu.profile') }}</RouterLink>
-              <RouterLink :to="{ name: 'settings' }" class="dropdown-item" v-if="auth.IsAdmin || !settings.Setting('ApiAdminOnly') || settings.Setting('WebAuthnEnabled')"><i class="fas fa-gears"></i> {{ $t('menu.settings') }}</RouterLink>
-              <RouterLink :to="{ name: 'audit' }" class="dropdown-item" v-if="auth.IsAdmin"><i class="fas fa-file-shield"></i> {{ $t('menu.audit') }}</RouterLink>
-              <div class="dropdown-divider"></div>
+              <template v-if="auth.IsAdmin">
+                <RouterLink :to="{ name: 'profile' }" class="dropdown-item"><i class="fas fa-user"></i> {{ $t('menu.profile') }}</RouterLink>
+                <RouterLink :to="{ name: 'settings' }" class="dropdown-item"><i class="fas fa-gears"></i> {{ $t('menu.settings') }}</RouterLink>
+                <RouterLink :to="{ name: 'audit' }" class="dropdown-item"><i class="fas fa-file-shield"></i> {{ $t('menu.audit') }}</RouterLink>
+                <div class="dropdown-divider"></div>
+              </template>
               <a class="dropdown-item" href="#" @click.prevent="auth.Logout"><i class="fas fa-sign-out-alt"></i> {{ $t('menu.logout') }}</a>
             </div>
           </div>
@@ -258,6 +267,9 @@ const userDisplayName = computed(() => {
   color: var(--bs-badge-color)!important;
 }
 
+.navbar-brand img {
+  max-height: 46px; /* height of the default logo, limits logos configured by web.site_logo_file */
+}
 [data-bs-theme=dark] .navbar-dark, .navbar {
   background-color: #000 !important;
 }
