@@ -653,7 +653,6 @@
   "devices": {
     "menu": "VPN端末",
     "headline": "あなたの端末",
-    "empty": "まだ端末がありません。",
     "add": "端末を追加",
     "connected": "接続中",
     "disconnected": "未接続",
@@ -663,6 +662,47 @@
     "name-label": "端末名",
     "name-placeholder": "MacBook Pro",
     "create": "VPN設定を作成",
-    "download-notice": "VPN設定ファイルは作成時に1回だけダウンロードできます。紛失した場合は端末を削除して作り直してください。"
+    "redo": "設定をやり直す",
+    "confirm-redo": "「{name}」を作り直しますか？今の設定は使えなくなります。",
+    "tunnel-name": "WireGuard アプリでの名前",
+    "in-app-browser": "アプリ内のブラウザでは設定を保存できません。",
+    "open-in-browser": "ブラウザで開く",
+    "platforms": {
+      "ios": "iPhone / iPad",
+      "android": "Android",
+      "macos": "Mac",
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "setup": {
+      "title": "3ステップで VPN につながります",
+      "step-app": "WireGuard アプリを入れる",
+      "get-app": "{platform} 版を入手",
+      "other-platforms": "ほかの端末:",
+      "step-add": "この端末を登録する",
+      "step-import": "アプリに読み込んでオンにする",
+      "pc-hint": "PC があれば、PC でこのページを開くとスマホは QR コードで読み込めます"
+    },
+    "import": {
+      "title": "アプリに読み込む",
+      "phone-title": "スマホで使う",
+      "pc-title": "このPCで使う",
+      "app-open": "WireGuard を開く",
+      "app-plus": "＋",
+      "ios-qr": "QRコードから作成",
+      "android-qr": "QRコードをスキャン",
+      "ios-file": "ファイル、アーカイブから作成",
+      "android-file": "ファイル、アーカイブからインポート",
+      "macos-menu": "メニューバーの WireGuard",
+      "macos-file": "ファイルからトンネルをインポート…",
+      "windows-file": "トンネルをファイルからインポート…",
+      "open-in-app": "WireGuard で開く",
+      "share-pick-app": "一覧から WireGuard を選ぶ",
+      "allow-vpn": "VPN構成の追加を許可",
+      "save-file": "設定ファイルを保存",
+      "qr-label": "WireGuard の設定の QR コード",
+      "waiting": "アプリでオンにすると、ここに接続が表示されます",
+      "connected": "接続できました"
+    }
   }
 }

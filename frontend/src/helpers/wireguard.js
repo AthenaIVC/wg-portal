@@ -46,7 +46,7 @@ export async function generateKeypair() {
  * @param {string} privateKey - The Base64-encoded private key that only exists in the browser.
  * @returns {string} The wg-quick configuration.
  */
-function buildWgQuickConfig(peer, privateKey) {
+export function buildWgQuickConfig(peer, privateKey) {
   const lines = [
     '[Interface]',
     `PrivateKey = ${privateKey}`,
@@ -88,8 +88,21 @@ function buildWgQuickConfig(peer, privateKey) {
  * @param {string} filename - The name of the downloaded file.
  */
 export function downloadWgQuickConfig(peer, privateKey, filename) {
+  downloadConfigFile(buildWgQuickConfig(peer, privateKey), filename)
+}
+
+/**
+ * Download a configuration file.
+ * @function downloadConfigFile
+ * @param {string} config - The configuration.
+ * @param {string} filename - The name of the downloaded file.
+ */
+export function downloadConfigFile(config, filename) {
+  // A blob URL instead of a data URL: recent iOS versions refuse some data URL downloads.
+  // application/octet-stream keeps the .conf extension on Android (text/plain would become .conf.txt).
+  const url = URL.createObjectURL(new Blob([config], { type: 'application/octet-stream' }))
   let element = document.createElement('a')
-  element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(buildWgQuickConfig(peer, privateKey)))
+  element.setAttribute('href', url)
   element.setAttribute('download', filename)
 
   element.style.display = 'none'
@@ -97,4 +110,20 @@ export function downloadWgQuickConfig(peer, privateKey, filename) {
 
   element.click()
   document.body.removeChild(element)
+  setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
+
+/**
+ * Name of the tunnel in the WireGuard apps, which is the config file name without ".conf".
+ * The WireGuard Android app and wg-quick only accept 1-15 characters of [a-zA-Z0-9_=+.-], so the name is the site
+ * title (at most 10 characters) and the first 4 characters of the public key, e.g. "athena-vpn-k7q2".
+ * @function tunnelName
+ * @param {string} siteTitle - The site title (web.site_title).
+ * @param {string} publicKey - The Base64-encoded public key of the peer.
+ * @returns {string} The tunnel name.
+ */
+export function tunnelName(siteTitle, publicKey) {
+  const prefix = siteTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 10).replace(/^-+|-+$/g, '') || 'wg'
+  const id = publicKey.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toLowerCase()
+  return `${prefix}-${id}`
 }

@@ -8,7 +8,8 @@ import { freshPeer, freshInterface } from '@/helpers/models';
 import { profileStore } from "@/stores/profile";
 import { settingsStore } from "@/stores/settings";
 import { authStore } from "@/stores/auth";
-import { downloadWgQuickConfig, generateKeypair } from '@/helpers/wireguard';
+import { buildWgQuickConfig, downloadWgQuickConfig, generateKeypair, tunnelName } from '@/helpers/wireguard';
+import DeviceImportStep from "./DeviceImportStep.vue";
 
 const { t } = useI18n()
 
@@ -20,6 +21,7 @@ const auth = authStore()
 const props = defineProps({
   peerId: String,
   visible: Boolean,
+  deviceName: String, // initial name of a new device (non-admin users)
 })
 
 const emit = defineEmits(['close'])
@@ -57,7 +59,7 @@ const title = computed(() => {
   }
 
   if (simpleMode.value) {
-    return t("devices.add")
+    return importDevice.value ? t("devices.import.title") : t("devices.add")
   }
 
   if (selectedPeer.value) {
@@ -70,6 +72,8 @@ const formData = ref(freshPeer())
 const isSaving = ref(false)
 const isDeleting = ref(false)
 const clientSideKeyGenerated = ref(false)
+// config of a device created by a non-admin user, it only exists in this browser until the dialog is closed
+const importDevice = ref(null)
 
 // functions
 
@@ -114,7 +118,7 @@ watch(() => props.visible, async (newValue, oldValue) => {
       formData.value.PostDown = peers.Prepared.PostDown
 
       if (simpleMode.value) {
-        formData.value.DisplayName = ""
+        formData.value.DisplayName = props.deviceName || ""
       }
     } else { // fill existing data
       formData.value.Identifier = selectedPeer.value.Identifier
@@ -180,6 +184,7 @@ watch(() => formData.value.Disabled, async (newValue, oldValue) => {
 function close() {
   formData.value = freshPeer()
   clientSideKeyGenerated.value = false
+  importDevice.value = null
   emit('close')
 }
 
@@ -188,12 +193,6 @@ async function generateClientSideKeyPair() {
   formData.value.PrivateKey = keypair.privateKey
   formData.value.PublicKey = keypair.publicKey
   clientSideKeyGenerated.value = true
-}
-
-// e.g. "My VPN" and "MacBook Pro" become "my-vpn-MacBook-Pro.conf"
-function deviceConfigFileName(deviceName) {
-  const slug = (value) => value.trim().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '')
-  return `${slug(WGPORTAL_SITE_TITLE).toLowerCase()}-${slug(deviceName)}.conf`
 }
 
 async function save() {
@@ -211,7 +210,13 @@ async function save() {
       const keypair = await generateKeypair()
       // The client private key must never leave the browser.
       await peers.CreatePeer(selectedInterface.value.Identifier, { ...formData.value, PrivateKey: "", PublicKey: keypair.publicKey })
-      downloadWgQuickConfig(peers.Find(keypair.publicKey), keypair.privateKey, deviceConfigFileName(formData.value.DisplayName))
+      const createdPeer = peers.Find(keypair.publicKey)
+      importDevice.value = {
+        peerId: createdPeer.Identifier,
+        config: buildWgQuickConfig(createdPeer, keypair.privateKey),
+        fileName: `${tunnelName(WGPORTAL_SITE_TITLE, keypair.publicKey)}.conf`,
+      }
+      return // the dialog continues with importing the config into the WireGuard app
     } else {
       await peers.CreatePeer(selectedInterface.value.Identifier, formData.value)
     }
@@ -249,12 +254,12 @@ async function del() {
 <template>
   <Modal :title="title" :visible="visible" @close="close">
     <template #default v-if="simpleMode">
-      <div class="form-group">
+      <DeviceImportStep v-if="importDevice" v-bind="importDevice"></DeviceImportStep>
+      <div v-else class="form-group">
         <label class="form-label">{{ $t('devices.name-label') }}</label>
         <input type="text" class="form-control" :placeholder="$t('devices.name-placeholder')" required
           v-model="formData.DisplayName">
       </div>
-      <p class="form-text text-muted mt-3 mb-0">{{ $t('devices.download-notice') }}</p>
     </template>
     <template #default v-else>
       <fieldset>
@@ -346,7 +351,7 @@ async function del() {
       </fieldset>
     </template>
     <template #footer v-if="simpleMode">
-      <button class="btn btn-primary me-1" type="button" @click.prevent="save" :disabled="isSaving || !formData.DisplayName.trim()">
+      <button v-if="!importDevice" class="btn btn-primary me-1" type="button" @click.prevent="save" :disabled="isSaving || !formData.DisplayName.trim()">
         <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
         {{ $t('devices.create') }}
       </button>

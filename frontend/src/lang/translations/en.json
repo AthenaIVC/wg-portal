@@ -664,7 +664,6 @@
   "devices": {
     "menu": "VPN Devices",
     "headline": "Your devices",
-    "empty": "You have no devices yet.",
     "add": "Add device",
     "connected": "Connected",
     "disconnected": "Not connected",
@@ -674,6 +673,47 @@
     "name-label": "Device name",
     "name-placeholder": "MacBook Pro",
     "create": "Create VPN configuration",
-    "download-notice": "The VPN configuration file can only be downloaded once, when it is created. If you lose it, delete the device and create it again."
+    "redo": "Set up again",
+    "confirm-redo": "Set up \"{name}\" again? The current configuration stops working.",
+    "tunnel-name": "Name in the WireGuard app",
+    "in-app-browser": "This in-app browser can't save the configuration.",
+    "open-in-browser": "Open in your browser",
+    "platforms": {
+      "ios": "iPhone / iPad",
+      "android": "Android",
+      "macos": "Mac",
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "setup": {
+      "title": "Connect to the VPN in 3 steps",
+      "step-app": "Install the WireGuard app",
+      "get-app": "Get it for {platform}",
+      "other-platforms": "Other devices:",
+      "step-add": "Register this device",
+      "step-import": "Import into the app and switch it on",
+      "pc-hint": "With a PC, open this page on the PC and scan the QR code with your phone"
+    },
+    "import": {
+      "title": "Import into the app",
+      "phone-title": "On a phone",
+      "pc-title": "On this computer",
+      "app-open": "Open WireGuard",
+      "app-plus": "+",
+      "ios-qr": "Create from QR code",
+      "android-qr": "Scan from QR code",
+      "ios-file": "Create from file or archive",
+      "android-file": "Import from file or archive",
+      "macos-menu": "WireGuard in the menu bar",
+      "macos-file": "Import Tunnel(s) from File…",
+      "windows-file": "Import tunnel(s) from file…",
+      "open-in-app": "Open in WireGuard",
+      "share-pick-app": "Choose WireGuard",
+      "allow-vpn": "Allow the VPN configuration",
+      "save-file": "Save configuration file",
+      "qr-label": "QR code of the WireGuard configuration",
+      "waiting": "Switch the tunnel on in the app to see the connection here",
+      "connected": "Connected"
+    }
   }
 }
