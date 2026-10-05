@@ -173,6 +173,8 @@ func defaultConfig() *Config {
 		CsrfSecret:        getEnvStr("WG_PORTAL_WEB_CSRF_SECRET", "extremely_secret"),
 		SiteTitle:         getEnvStr("WG_PORTAL_WEB_SITE_TITLE", "WireGuard Portal"),
 		SiteCompanyName:   getEnvStr("WG_PORTAL_WEB_SITE_COMPANY_NAME", "WireGuard Portal"),
+		SiteLogoFile:      getEnvStr("WG_PORTAL_WEB_SITE_LOGO_FILE", ""),
+		SiteCssFile:       getEnvStr("WG_PORTAL_WEB_SITE_CSS_FILE", ""),
 		CertFile:          getEnvStr("WG_PORTAL_WEB_CERT_FILE", ""),
 		KeyFile:           getEnvStr("WG_PORTAL_WEB_KEY_FILE", ""),
 		FrontendFilePath:  getEnvStr("WG_PORTAL_WEB_FRONTEND_FILEPATH", ""),

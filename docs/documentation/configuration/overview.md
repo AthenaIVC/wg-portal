@@ -93,6 +93,8 @@ web:
   base_path: ""
   site_company_name: WireGuard Portal
   site_title: WireGuard Portal
+  site_logo_file: ""
+  site_css_file: ""
   session_identifier: wgPortalSession
   session_secret: very_secret
   csrf_secret: extremely_secret
@@ -954,6 +956,17 @@ Without a valid `external_url`, the login process may fail due to CSRF protectio
 - **Default:** `WireGuard Portal`
 - **Environment Variable:** `WG_PORTAL_WEB_SITE_TITLE`
 - **Description:** The title that is shown in the web frontend.
+
+### `site_logo_file`
+- **Default:** *(empty)*
+- **Environment Variable:** `WG_PORTAL_WEB_SITE_LOGO_FILE`
+- **Description:** Optional path to an image file (PNG, SVG, ...) that replaces the default header logo of the web frontend.
+
+### `site_css_file`
+- **Default:** *(empty)*
+- **Environment Variable:** `WG_PORTAL_WEB_SITE_CSS_FILE`
+- **Description:** Optional path to a CSS file that is loaded after the default styles of the web frontend.
+  Use it to adapt colors and typography, e.g. by overriding Bootstrap CSS variables (`--bs-primary`, `--bs-body-font-family`, ...).
 
 ### `session_identifier`
 - **Default:** `wgPortalSession`

@@ -91,6 +91,11 @@ func NewServer(cfg *config.Config, endpoints ...ApiEndpointSetupFunc) (*Server, 
 	s.root.HandleFiles("/css", http.FS(fsMust(fs.Sub(apiStatics, "assets/css"))))
 	s.root.HandleFiles("/js", http.FS(fsMust(fs.Sub(apiStatics, "assets/js"))))
 	s.root.HandleFiles("/img", imgFs)
+	if cfg.Web.SiteLogoFile != "" {
+		s.root.HandleFunc("GET /img/header-logo.png", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, cfg.Web.SiteLogoFile)
+		})
+	}
 	s.root.HandleFiles("/fonts", http.FS(fsMust(fs.Sub(apiStatics, "assets/fonts"))))
 	if cfg.Web.BasePath == "" {
 		s.root.HandleFiles("/doc", http.FS(fsMust(fs.Sub(apiStatics, "assets/doc"))))
@@ -232,6 +237,13 @@ func (s *Server) setupFrontendRoutes() {
 	var customCssFileName string
 	if s.cfg.Web.BasePath != "" {
 		customIndexFile, customCssFile, customCssFileName = s.updateBasePathInFrontend(useEmbeddedFrontend)
+	}
+
+	// theme.css is an empty placeholder in the frontend that can be replaced by a custom stylesheet
+	if s.cfg.Web.SiteCssFile != "" {
+		s.root.HandleFunc("GET /app/theme.css", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, s.cfg.Web.SiteCssFile)
+		})
 	}
 
 	s.root.HandleFunc("GET /app/", func(w http.ResponseWriter, r *http.Request) {
