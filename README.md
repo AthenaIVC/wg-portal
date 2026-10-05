@@ -42,6 +42,23 @@ The configuration portal supports using a database (SQLite, MySQL, MsSQL, or Pos
 <!-- Text to this line # is included in docs/documentation/overview.md -->
 ![Screenshot](docs/assets/images/screenshot.png)
 
+## Fork additions
+
+This fork keeps up with [h44z/wg-portal](https://github.com/h44z/wg-portal) and adds a simplified web UI for non-admin users ("VPN devices"):
+
+- Non-admin users only see their devices with connection status, can add a device by entering a name and can delete devices.
+  Keys are generated in the browser and never shown; the private key is never sent to the server.
+  The WireGuard configuration (`<site title>-<device name>.conf`) is downloaded once, right after the device is created.
+- Key Generator, IP Calculator, Settings, Interfaces, Users and Audit are only available to admins. The admin UI is unchanged.
+
+Required configuration: `core.self_provisioning_allowed: true` and `core.editable_keys: true` (default).
+Without `editable_keys`, the backend would replace the browser-generated public key, so the "Add device" button is hidden.
+
+Branding is configured without code changes: `web.site_title` (shown next to the logo for non-admin users and used as config file name prefix),
+`web.site_company_name`, `web.site_logo_file` (replaces the header logo) and `web.site_css_file` (stylesheet loaded after the default styles).
+
+A scheduled workflow opens a pull request whenever the upstream `master` branch has new commits.
+
 ## Documentation
 
 For the complete documentation visit [wgportal.org](https://wgportal.org).
