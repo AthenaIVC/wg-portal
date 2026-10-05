@@ -34,6 +34,17 @@ onMounted(async () => {
     return
   }
   await settings.LoadSettings()
+
+  // ?all is the emergency access to the login form, ?manual is set after a local logout or a failed external login
+  const query = router.currentRoute.value.query
+  const autoLoginProvider = settings.Setting('AutoLoginProvider')
+  if (autoLoginProvider && !('all' in query) && !('manual' in query)) {
+    await auth.LoadProviders()
+    const provider = auth.LoginProviders.find((p) => p.Identifier === autoLoginProvider)
+    if (provider) {
+      externalLogin(provider)
+    }
+  }
 })
 
 const login = async function () {

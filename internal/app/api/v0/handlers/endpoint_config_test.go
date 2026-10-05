@@ -61,3 +61,16 @@ func TestConfigEndpointSettingsHidesEditableKeysFromAnonymousUsers(t *testing.T)
 		t.Fatalf("expected EditableKeys to be hidden from anonymous users")
 	}
 }
+
+// TestConfigEndpointSettingsExposesAutoLoginProviderToAnonymousUsers pins the AutoLoginProvider setting that the
+// frontend uses to redirect unauthenticated users to the external login provider (frontend/src/views/LoginView.vue).
+func TestConfigEndpointSettingsExposesAutoLoginProviderToAnonymousUsers(t *testing.T) {
+	cfg := &config.Config{}
+	cfg.Auth.AutoLoginProvider = "company-oidc"
+
+	for _, userId := range []domain.UserIdentifier{domain.CtxUnknownUserId, "user@example.com"} {
+		if got := getSettings(t, cfg, userId).AutoLoginProvider; got != "company-oidc" {
+			t.Fatalf("expected AutoLoginProvider %q for user %q, got %q", "company-oidc", userId, got)
+		}
+	}
+}

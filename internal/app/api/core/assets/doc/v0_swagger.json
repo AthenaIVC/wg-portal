@@ -2627,6 +2627,9 @@
                 "ApiAdminOnly": {
                     "type": "boolean"
                 },
+                "AutoLoginProvider": {
+                    "type": "string"
+                },
                 "AvailableBackends": {
                     "type": "array",
                     "items": {

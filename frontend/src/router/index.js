@@ -4,9 +4,13 @@ import LoginView from '../views/LoginView.vue'
 
 import {authStore} from '@/stores/auth'
 import {securityStore} from '@/stores/security'
+import {settingsStore} from '@/stores/settings'
 import {notify} from "@kyvg/vue3-notification";
 
 export const publicPages = ['/', '/login']
+
+// login page without the automatic redirect to auth.auto_login_provider (after a local logout or a failed external login)
+export const manualLogin = { path: '/login', query: { manual: null } }
 
 const router = createRouter({
   // No base argument: createWebHashHistory() defaults to location.pathname + location.search,
@@ -134,7 +138,7 @@ router.beforeEach(async (to) => {
           type: 'error',
         })
 
-        return '/login'
+        return manualLogin
       }
     } else {
       notify({
@@ -143,7 +147,7 @@ router.beforeEach(async (to) => {
         type: 'error',
       })
 
-      return '/login'
+      return manualLogin
     }
   }
 
@@ -172,6 +176,17 @@ router.beforeEach(async (to) => {
   if (authRequired && !auth.IsAuthenticated) {
     auth.SetReturnUrl(to.fullPath) // store the original destination before starting the auth process
     return '/login'
+  }
+
+  // with an automatic login provider, the login page (which redirects to the provider) replaces the public home page
+  if (to.path === '/' && !auth.IsAuthenticated) {
+    const settings = settingsStore()
+    if (!('AutoLoginProvider' in settings.settings)) {
+      await settings.LoadSettings()
+    }
+    if (settings.Setting('AutoLoginProvider')) {
+      return '/login'
+    }
   }
 
   // non-admin users only manage their VPN devices

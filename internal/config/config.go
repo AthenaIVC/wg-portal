@@ -227,6 +227,7 @@ func defaultConfig() *Config {
 	cfg.Auth.WebAuthn.Enabled = getEnvBool("WG_PORTAL_AUTH_WEBAUTHN_ENABLED", true)
 	cfg.Auth.MinPasswordLength = getEnvInt("WG_PORTAL_AUTH_MIN_PASSWORD_LENGTH", 16)
 	cfg.Auth.HideLoginForm = getEnvBool("WG_PORTAL_AUTH_HIDE_LOGIN_FORM", false)
+	cfg.Auth.AutoLoginProvider = getEnvStr("WG_PORTAL_AUTH_AUTO_LOGIN_PROVIDER", "")
 
 	return cfg
 }

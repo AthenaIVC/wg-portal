@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { notify } from "@kyvg/vue3-notification";
 import { apiWrapper } from '@/helpers/fetch-wrapper'
 import { websocketWrapper } from '@/helpers/websocket-wrapper'
-import router, { publicPages } from '../router'
+import router, { manualLogin, publicPages } from '../router'
 import { browserSupportsWebAuthn,startRegistration,startAuthentication } from '@simplewebauthn/browser';
 import {base64_url_encode} from "@/helpers/encoding";
 
@@ -45,7 +45,7 @@ export const authStore = defineStore('auth',{
         },
         // LoadProviders always returns a fulfilled promise, even if the request failed.
         async LoadProviders() {
-            apiWrapper.get(`/auth/providers`)
+            return apiWrapper.get(`/auth/providers`)
                 .then(providers => this.providers = providers)
                 .catch(error => {
                     this.providers = []
@@ -161,7 +161,7 @@ export const authStore = defineStore('auth',{
             })
 
 
-            await router.push('/login')
+            await router.push(manualLogin)
         },
         async RegisterWebAuthn() {
             // check if the browser supports WebAuthn
