@@ -1,0 +1,95 @@
+# Fork only: proposes new commits of the upstream master branch as a pull request (upstream:master -> master).
+# The merge result is tested here, because pull requests opened with the GITHUB_TOKEN do not trigger other workflows.
+# Requires "Allow GitHub Actions to create and approve pull requests" in the repository settings.
+
+name: Upstream sync
+
+on:
+  schedule:
+    - cron: "0 21 * * *" # daily, 06:00 JST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  UPSTREAM_REPO: h44z/wg-portal
+  BRANCH: master
+
+jobs:
+  sync:
+    name: Propose upstream changes
+    if: github.repository != 'h44z/wg-portal'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 0
+
+      - name: Check for new upstream commits
+        id: upstream
+        run: |
+          git fetch --no-tags "https://github.com/${UPSTREAM_REPO}.git" "${BRANCH}"
+          echo "sha=$(git rev-parse FETCH_HEAD)" >> "$GITHUB_OUTPUT"
+          echo "count=$(git rev-list --count HEAD..FETCH_HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Merge upstream
+        id: merge
+        if: steps.upstream.outputs.count != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-edit "${{ steps.upstream.outputs.sha }}"
+
+      - name: Set up Node
+        if: steps.merge.outcome == 'success'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Go
+        if: steps.merge.outcome == 'success'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Test the merge result
+        id: test
+        if: steps.merge.outcome == 'success'
+        run: make frontend && make test
+
+      - name: Open or update the pull request
+        if: always() && steps.upstream.outcome == 'success' && steps.upstream.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.upstream.outputs.sha }}
+          COUNT: ${{ steps.upstream.outputs.count }}
+          MERGE: ${{ steps.merge.outcome }}
+          TEST: ${{ steps.test.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          head="${UPSTREAM_REPO%%/*}:${BRANCH}"
+          pr=$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&base=${BRANCH}&head=${head}" --jq '.[0].number // empty')
+          if [ -z "$pr" ]; then
+            pr=$(gh api "repos/${GITHUB_REPOSITORY}/pulls" -f head="$head" -f base="$BRANCH" \
+              -f title="Merge upstream ${UPSTREAM_REPO}" \
+              -f body="New commits from https://github.com/${UPSTREAM_REPO}. Merge this pull request with a merge commit to keep the upstream history." \
+              --jq .number)
+          fi
+
+          # report the result once per upstream commit
+          if ! gh api "repos/${GITHUB_REPOSITORY}/issues/${pr}/comments" --paginate --jq '.[].body' | grep -q "$SHA"; then
+            if [ "$MERGE" != "success" ]; then
+              result="merge conflicts, resolve them locally: git fetch https://github.com/${UPSTREAM_REPO}.git ${BRANCH} && git merge FETCH_HEAD"
+            elif [ "$TEST" != "success" ]; then
+              result="merges cleanly, but \`make test\` failed"
+            else
+              result="merges cleanly and \`make test\` passed"
+            fi
+            gh pr comment "$pr" --repo "$GITHUB_REPOSITORY" --body "Upstream ${SHA} (${COUNT} new commits): ${result}. [Workflow run](${RUN_URL})"
+          fi
