@@ -239,6 +239,11 @@ func (s *Server) setupFrontendRoutes() {
 		customIndexFile, customCssFile, customCssFileName = s.updateBasePathInFrontend(useEmbeddedFrontend)
 	}
 
+	if s.cfg.Web.SiteFaviconFile != "" {
+		s.root.HandleFunc("GET /app/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, s.cfg.Web.SiteFaviconFile)
+		})
+	}
 	// theme.css is an empty placeholder in the frontend that can be replaced by a custom stylesheet
 	if s.cfg.Web.SiteCssFile != "" {
 		s.root.HandleFunc("GET /app/theme.css", func(w http.ResponseWriter, r *http.Request) {

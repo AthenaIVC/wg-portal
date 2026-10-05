@@ -174,6 +174,7 @@ func defaultConfig() *Config {
 		SiteTitle:         getEnvStr("WG_PORTAL_WEB_SITE_TITLE", "WireGuard Portal"),
 		SiteCompanyName:   getEnvStr("WG_PORTAL_WEB_SITE_COMPANY_NAME", "WireGuard Portal"),
 		SiteLogoFile:      getEnvStr("WG_PORTAL_WEB_SITE_LOGO_FILE", ""),
+		SiteFaviconFile:   getEnvStr("WG_PORTAL_WEB_SITE_FAVICON_FILE", ""),
 		SiteCssFile:       getEnvStr("WG_PORTAL_WEB_SITE_CSS_FILE", ""),
 		CertFile:          getEnvStr("WG_PORTAL_WEB_CERT_FILE", ""),
 		KeyFile:           getEnvStr("WG_PORTAL_WEB_KEY_FILE", ""),
