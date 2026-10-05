@@ -95,6 +95,7 @@ web:
   site_company_name: WireGuard Portal
   site_title: WireGuard Portal
   site_logo_file: ""
+  site_favicon_file: ""
   site_css_file: ""
   session_identifier: wgPortalSession
   session_secret: very_secret
@@ -970,6 +971,11 @@ Without a valid `external_url`, the login process may fail due to CSRF protectio
 - **Default:** *(empty)*
 - **Environment Variable:** `WG_PORTAL_WEB_SITE_LOGO_FILE`
 - **Description:** Optional path to an image file (PNG, SVG, ...) that replaces the default header logo of the web frontend.
+
+### `site_favicon_file`
+- **Default:** *(empty)*
+- **Environment Variable:** `WG_PORTAL_WEB_SITE_FAVICON_FILE`
+- **Description:** Optional path to an image file (ICO, PNG, SVG, ...) that replaces the default favicon of the web frontend.
 
 ### `site_css_file`
 - **Default:** *(empty)*
