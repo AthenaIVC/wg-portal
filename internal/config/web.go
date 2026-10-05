@@ -27,6 +27,10 @@ type WebConfig struct {
 	SiteTitle string `yaml:"site_title"`
 	// SiteCompanyName is the company name that is shown at the bottom of the web frontend.
 	SiteCompanyName string `yaml:"site_company_name"`
+	// SiteLogoFile is an optional path to an image file that replaces the default header logo.
+	SiteLogoFile string `yaml:"site_logo_file"`
+	// SiteCssFile is an optional path to a stylesheet that is loaded after the default styles of the web frontend.
+	SiteCssFile string `yaml:"site_css_file"`
 	// CertFile is the path to the TLS certificate file.
 	CertFile string `yaml:"cert_file"`
 	// KeyFile is the path to the TLS certificate key file.
