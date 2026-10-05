@@ -48,7 +48,13 @@ This fork keeps up with [h44z/wg-portal](https://github.com/h44z/wg-portal) and 
 
 - Non-admin users only see their devices with connection status, can add a device by entering a name and can delete devices.
   Keys are generated in the browser and never shown; the private key is never sent to the server.
-  The WireGuard configuration (`<site title>-<device name>.conf`) is downloaded once, right after the device is created.
+  Users without devices get a three step guide (install the WireGuard app for their platform, add the device, import it).
+  After a device is created, the dialog shows how to import the configuration on the current platform: a QR code for phones
+  and a file download on computers, the share sheet on iOS, and a file download plus the import steps on Android. It
+  reports the connection as soon as the tunnel is switched on (needs peer statistics; a short
+  `statistics.data_collection_interval` makes it appear faster). A device that never connected can be set up again.
+  The configuration file is named `<site title, max. 10 characters>-<4 characters of the public key>.conf`, because the
+  WireGuard Android app and wg-quick only accept tunnel names of up to 15 characters `[a-zA-Z0-9_=+.-]`.
 - Key Generator, IP Calculator, Settings, Interfaces, Users and Audit are only available to admins. The admin UI is unchanged.
 
 Required configuration: `core.self_provisioning_allowed: true` and `core.editable_keys: true` (default).

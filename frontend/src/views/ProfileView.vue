@@ -10,9 +10,14 @@ import Pagination from "@/components/Pagination.vue";
 import { settingsStore } from "@/stores/settings";
 import { humanFileSize } from "@/helpers/utils";
 import { authStore } from "@/stores/auth";
+import { notify } from "@kyvg/vue3-notification";
+import DeviceSetupGuide from "@/components/DeviceSetupGuide.vue";
+import { tunnelName } from "@/helpers/wireguard";
+import { externalBrowserUrl, isLineInAppBrowser } from "@/helpers/platform";
 
 const settings = settingsStore()
 const auth = authStore()
+const siteTitle = WGPORTAL_SITE_TITLE
 const profile = profileStore()
 const peers = peerStore()
 
@@ -63,6 +68,40 @@ const canAddDevice = computed(() => {
   return settings.Setting('SelfProvisioning') && settings.Setting('EditableKeys') && profile.CountInterfaces > 0
 })
 
+// the config of a new device only exists in the browser that created it, so a device that never connected can be
+// recreated if the config got lost (e.g. the browser tab was reloaded before the config was imported)
+const redoDeviceName = ref("")
+
+function neverConnected(peer) {
+  return profile.hasStatistics && !peer.Disabled && !profile.Statistics(peer.Identifier).LastHandshake
+}
+
+async function redoDevice(peer) {
+  if (!confirm(t('devices.confirm-redo', {name: peer.DisplayName}))) {
+    return
+  }
+  try {
+    await peers.DeletePeer(peer.Identifier)
+  } catch (e) {
+    notify({
+      title: "Failed to delete peer!",
+      text: e.toString(),
+      type: 'error',
+    })
+    return
+  }
+  await profile.LoadPeers()
+  redoDeviceName.value = peer.DisplayName
+  editPeerId.value = '#NEW#'
+}
+
+function closeEditModal() {
+  editPeerId.value = ''
+  redoDeviceName.value = ''
+  profile.LoadPeers()
+  profile.LoadStats()
+}
+
 async function deleteDevice(peer) {
   if (confirm(t('devices.confirm-delete', {name: peer.DisplayName}))) {
     try {
@@ -90,28 +129,38 @@ onMounted(async () => {
 
 <template>
   <PeerViewModal :peerId="viewedPeerId" :visible="viewedPeerId !== ''" @close="viewedPeerId = ''"></PeerViewModal>
-  <UserPeerEditModal :peerId="editPeerId" :visible="editPeerId !== ''" @close="editPeerId = ''; profile.LoadPeers()"></UserPeerEditModal>
+  <UserPeerEditModal :peerId="editPeerId" :visible="editPeerId !== ''" :deviceName="redoDeviceName" @close="closeEditModal"></UserPeerEditModal>
 
   <!-- Device list for non-admin users -->
   <template v-if="!auth.IsAdmin">
-    <h2 class="mt-4">{{ $t('devices.headline') }}</h2>
-    <p v-if="profile.CountPeers === 0" class="text-muted">{{ $t('devices.empty') }}</p>
+    <div v-if="isLineInAppBrowser()" class="alert alert-warning mt-4">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ $t('devices.in-app-browser') }}
+      <a :href="externalBrowserUrl()" class="alert-link ms-1">{{ $t('devices.open-in-browser') }}</a>
+    </div>
+    <DeviceSetupGuide v-if="profile.CountPeers === 0 && canAddDevice" @add="editPeerId = '#NEW#'"></DeviceSetupGuide>
+    <h2 v-else class="mt-4">{{ $t('devices.headline') }}</h2>
     <div v-for="peer in profile.Sorted" :key="peer.Identifier" class="card mb-2">
       <div class="card-body d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">{{ peer.DisplayName }}</span>
+        <div>
+          <div class="fw-semibold">{{ peer.DisplayName }}</div>
+          <small class="text-muted" :title="$t('devices.tunnel-name')">{{ tunnelName(siteTitle, peer.PublicKey) }}</small>
+        </div>
         <div class="text-end">
           <div>
             <span v-if="peer.Disabled" class="text-danger" :title="peer.DisabledReason"><i class="fa-solid fa-circle fa-xs"></i> {{ $t('devices.disabled') }}</span>
             <span v-else-if="profile.hasStatistics && profile.Statistics(peer.Identifier).IsConnected" class="text-success"><i class="fa-solid fa-circle fa-xs"></i> {{ $t('devices.connected') }}</span>
             <span v-else-if="profile.hasStatistics" class="text-muted"><i class="fa-regular fa-circle fa-xs"></i> {{ $t('devices.disconnected') }}</span>
           </div>
+          <button v-if="canAddDevice && neverConnected(peer) && profile.HasInterface(peer.InterfaceIdentifier)" class="btn btn-secondary btn-sm mt-1 me-1" type="button" @click.prevent="redoDevice(peer)">
+            {{ $t('devices.redo') }}
+          </button>
           <button v-if="settings.Setting('SelfProvisioning') && profile.HasInterface(peer.InterfaceIdentifier)" class="btn btn-outline-danger btn-sm mt-1" type="button" @click.prevent="deleteDevice(peer)">
             {{ $t('devices.delete') }}
           </button>
         </div>
       </div>
     </div>
-    <div v-if="canAddDevice" class="text-center mt-4">
+    <div v-if="canAddDevice && profile.CountPeers > 0" class="text-center mt-4">
       <button class="btn btn-primary" type="button" @click.prevent="editPeerId = '#NEW#'">
         <i class="fa fa-plus me-1"></i>{{ $t('devices.add') }}
       </button>
