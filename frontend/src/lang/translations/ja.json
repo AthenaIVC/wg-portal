@@ -649,5 +649,20 @@
         "description": "ピア表示名に追加されるプレフィックス。"
       }
     }
+  },
+  "devices": {
+    "menu": "VPN端末",
+    "headline": "あなたの端末",
+    "empty": "まだ端末がありません。",
+    "add": "端末を追加",
+    "connected": "接続中",
+    "disconnected": "未接続",
+    "disabled": "停止中",
+    "delete": "削除",
+    "confirm-delete": "「{name}」を削除しますか？この端末のVPN設定は使えなくなります。",
+    "name-label": "端末名",
+    "name-placeholder": "MacBook Pro",
+    "create": "VPN設定を作成",
+    "download-notice": "VPN設定ファイルは作成時に1回だけダウンロードできます。紛失した場合は端末を削除して作り直してください。"
   }
 }
