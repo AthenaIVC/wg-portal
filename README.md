@@ -68,6 +68,13 @@ the password login form is only reachable as an emergency access via `/#/login?a
 
 A scheduled workflow opens a pull request whenever the upstream `master` branch has new commits.
 
+Pushing a tag `athena-YYYY.MM.DD` (`.N` for further releases on the same day) on a `master` commit runs the tests and publishes
+a GitHub release with the binaries `wg-portal_linux_amd64`, `wg-portal_linux_arm64` and their `SHA256SUMS`:
+
+```bash
+git tag athena-2026.11.11 origin/master && git push origin athena-2026.11.11
+```
+
 ## Documentation
 
 For the complete documentation visit [wgportal.org](https://wgportal.org).

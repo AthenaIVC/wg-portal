@@ -1,0 +1,96 @@
+# Fork only: publishes the binaries of a tested master commit as a GitHub release.
+# Every released binary is traceable to a tag and has a checksum, and previous releases stay available.
+#
+# Tags are named athena-YYYY.MM.DD (add .N for a second release on the same day). They do not match the "v*.*.*"
+# pattern, because Fork Docker would also run for them and upstream version numbers stay reserved for upstream.
+
+name: Fork Release
+
+on:
+  push:
+    tags: ["athena-*"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: make test
+    if: github.repository != 'h44z/wg-portal'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Only reviewed code may be released: a tag on a side branch would otherwise publish it as a release.
+      - name: Ensure the tag is on master
+        run: |
+          git fetch --no-tags origin master
+          git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD
+
+      # Same steps as test.yml. test.yml comes from upstream, so making it reusable (workflow_call) would add
+      # a fork change to an upstream file and a conflict on every upstream sync.
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Build frontend
+        run: make frontend
+
+      - name: Run tests
+        run: make test
+
+  release:
+    name: Build and release
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Get Version
+        shell: bash
+        run: echo "BUILD_VERSION=${GITHUB_REF_NAME}-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      # The "binaries" stage of the Dockerfile cross-compiles on the build platform, so no QEMU is needed.
+      - name: Build binaries
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          target: binaries
+          outputs: type=local,dest=./binaries
+          build-args: |
+            BUILD_VERSION=${{ env.BUILD_VERSION }}
+
+      - name: Rename binaries and write checksums
+        run: |
+          for file in binaries/linux*/wg-portal; do
+            mv "$file" "binaries/wg-portal_$(basename "$(dirname "$file")")"
+          done
+          cd binaries
+          sha256sum wg-portal_linux* > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
+        with:
+          files: |
+            binaries/wg-portal_linux*
+            binaries/SHA256SUMS
+          generate_release_notes: true
